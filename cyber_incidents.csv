@@ -1,0 +1,21 @@
+date,attack_type,sector,losses
+2022-11-13,DDoS,Energy,302384
+2021-07-04,Malware,Retail,378913
+2024-02-01,DDoS,IT,420310
+2024-08-25,Phishing,Healthcare,168574
+2022-05-18,SQL Injection,Energy,39006
+2022-06-18,SQL Injection,Retail,293229
+2025-09-20,Ransomware,Education,234710
+2023-02-28,SQL Injection,Retail,442196
+2025-04-20,DDoS,IT,98128
+2025-05-07,Malware,Retail,76754
+2021-12-06,Insider Attack,Education,29530
+2022-12-23,Malware,Healthcare,192204
+2024-05-15,Ransomware,Government,288249
+2021-11-30,Ransomware,Healthcare,127336
+2024-05-13,DDoS,Energy,174942
+2024-07-18,Malware,Healthcare,101133
+2025-08-13,Malware,Finance,161564
+2024-12-09,Insider Attack,Healthcare,319125
+2024-03-13,Insider Attack,Education,92177
+2024-04-23,Insider Attack,Finance,136513
