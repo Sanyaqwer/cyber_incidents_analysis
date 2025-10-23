@@ -1,57 +1,90 @@
+import streamlit as st
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.cluster import KMeans
-import ipywidgets as widgets
-from IPython.display import display
+from datetime import datetime, timedelta
+import random
+import os
 
+st.set_page_config(page_title="Аналіз кіберінцидентів", layout="wide")
+st.title("🛡️ Аналіз кіберінцидентів")
 
+# --- 1. Генерація CSV, якщо його нема ---
+filename = "cyber_incidents.csv"
 
-df = pd.read_csv("cyber_incidents.csv", parse_dates=["date"])
+if not os.path.exists(filename):
+    st.warning("Файл cyber_incidents.csv не знайдено — створюємо тестові дані...")
+    attack_types = ["Phishing", "Ransomware", "DDoS", "Malware", "Insider Attack", "SQL Injection"]
+    sectors = ["Finance", "Healthcare", "Education", "Government", "Energy", "Retail", "IT"]
+    start_date = datetime(2021, 1, 1)
+    end_date = datetime(2025, 10, 1)
 
+    def random_date(start, end):
+        return start + timedelta(days=random.randint(0, (end - start).days))
 
+    data = []
+    for _ in range(20):
+        date = random_date(start_date, end_date).strftime("%Y-%m-%d")
+        attack = random.choice(attack_types)
+        sector = random.choice(sectors)
+        losses = random.randint(1000, 500000)
+        data.append([date, attack, sector, losses])
+
+    df = pd.DataFrame(data, columns=["date", "attack_type", "sector", "losses"])
+    df.to_csv(filename, index=False)
+    st.success(f"✅ Створено файл '{filename}' з тестовими даними.")
+else:
+    df = pd.read_csv(filename, parse_dates=["date"])
+
+# --- 2. Підготовка даних ---
 df["year"] = df["date"].dt.year
 
+# --- 3. Фільтри ---
+col1, col2 = st.columns(2)
+years = ["Усі"] + sorted(df["year"].unique().tolist())
+attack_types = ["Усі"] + sorted(df["attack_type"].unique().tolist())
 
-years = sorted(df["year"].unique())
-attack_types = sorted(df["attack_type"].unique())
+year = col1.selectbox("Виберіть рік:", years)
+attack = col2.selectbox("Виберіть тип атаки:", attack_types)
 
-year_dropdown = widgets.Dropdown(options=["Усі"] + years, description="Рік:")
-attack_dropdown = widgets.Dropdown(options=["Усі"] + attack_types, description="Тип атаки:")
+filtered = df.copy()
+if year != "Усі":
+    filtered = filtered[filtered["year"] == year]
+if attack != "Усі":
+    filtered = filtered[filtered["attack_type"] == attack]
 
-def update_stats(year, attack_type):
-    
-    filtered = df.copy()
-    if year != "Усі":
-        filtered = filtered[filtered["year"] == year]
-    if attack_type != "Усі":
-        filtered = filtered[filtered["attack_type"] == attack_type]
+st.write(f"📊 Відображено {len(filtered)} записів після фільтрації.")
 
-    
-    sector_stats = filtered["sector"].value_counts()
+# --- 4. Статистика за секторами ---
+st.subheader("📈 Кількість атак за секторами")
 
-    plt.figure(figsize=(8, 5))
-    sns.barplot(x=sector_stats.values, y=sector_stats.index)
-    plt.title("Кількість атак за секторами")
-    plt.xlabel("Кількість інцидентів")
-    plt.ylabel("Сектор")
-    plt.show()
+sector_stats = filtered["sector"].value_counts()
+fig, ax = plt.subplots(figsize=(8, 5))
+sns.barplot(x=sector_stats.values, y=sector_stats.index, ax=ax)
+ax.set_xlabel("Кількість інцидентів")
+ax.set_ylabel("Сектор")
+st.pyplot(fig)
 
-    
-    
-    if len(filtered) >= 3:
-        X = filtered[["losses", "year"]].dropna()
-        kmeans = KMeans(n_clusters=3, random_state=42)
-        filtered["cluster"] = kmeans.fit_predict(X)
+# --- 5. Кластеризація ---
+st.subheader("🤖 Кластеризація кіберінцидентів (K-Means)")
 
-        plt.figure(figsize=(6, 5))
-        plt.scatter(filtered["year"], filtered["losses"], c=filtered["cluster"], cmap="viridis")
-        plt.title("Кластеризація кіберінцидентів (K-Means)")
-        plt.xlabel("Рік")
-        plt.ylabel("Втрати, $")
-        plt.show()
-    else:
-        print("Недостатньо даних для кластеризації.")
+if len(filtered) >= 3:
+    X = filtered[["losses", "year"]].dropna()
+    kmeans = KMeans(n_clusters=3, random_state=42)
+    filtered["cluster"] = kmeans.fit_predict(X)
 
+    fig2, ax2 = plt.subplots(figsize=(8, 6))
+    scatter = ax2.scatter(filtered["year"], filtered["losses"], c=filtered["cluster"], cmap="viridis")
+    ax2.set_xlabel("Рік")
+    ax2.set_ylabel("Втрати ($)")
+    ax2.set_title("Результати кластеризації")
+    st.pyplot(fig2)
+else:
+    st.info("Недостатньо даних для кластеризації.")
 
-widgets.interactive(update_stats, year=year_dropdown, attack_type=attack_dropdown)
+# --- 6. Вивід таблиці ---
+st.subheader("🗂️ Дані інцидентів")
+st.dataframe(filtered)
+
