@@ -11,7 +11,6 @@ import os
 st.set_page_config(page_title="Аналіз кіберінцидентів", layout="wide")
 st.title("🛡️ Аналіз кіберінцидентів")
 
-# --- 1. Генерація CSV, якщо його нема ---
 filename = "cyber_incidents.csv"
 
 if not os.path.exists(filename):
@@ -38,10 +37,8 @@ if not os.path.exists(filename):
 else:
     df = pd.read_csv(filename, parse_dates=["date"])
 
-# --- 2. Підготовка даних ---
 df["year"] = df["date"].dt.year
 
-# --- 3. Фільтри ---
 col1, col2 = st.columns(2)
 years = ["Усі"] + sorted(df["year"].unique().tolist())
 attack_types = ["Усі"] + sorted(df["attack_type"].unique().tolist())
@@ -57,7 +54,6 @@ if attack != "Усі":
 
 st.write(f"📊 Відображено {len(filtered)} записів після фільтрації.")
 
-# --- 4. Статистика за секторами ---
 st.subheader("📈 Кількість атак за секторами")
 
 sector_stats = filtered["sector"].value_counts()
@@ -67,7 +63,6 @@ ax.set_xlabel("Кількість інцидентів")
 ax.set_ylabel("Сектор")
 st.pyplot(fig)
 
-# --- 5. Кластеризація ---
 st.subheader("🤖 Кластеризація кіберінцидентів (K-Means)")
 
 if len(filtered) >= 3:
@@ -84,7 +79,7 @@ if len(filtered) >= 3:
 else:
     st.info("Недостатньо даних для кластеризації.")
 
-# --- 6. Вивід таблиці ---
 st.subheader("🗂️ Дані інцидентів")
 st.dataframe(filtered)
+
 
